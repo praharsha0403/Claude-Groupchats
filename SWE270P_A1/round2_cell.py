@@ -58,7 +58,12 @@ def round2_repair(bug_id):
     base = _base_source(bug_id, bug)
     base_lines = {l.strip() for l in base.splitlines()}
     open_tasks = [t for t in LINE_TASKS[bug_id] if t[1].strip() in base_lines]
-    if base != bug["source"]:
+    if base != bug["source"] and not open_tasks:
+        # every faulty line was already changed, yet the patch still fails: search all lines again
+        base, open_tasks = bug["source"], list(LINE_TASKS[bug_id])
+        print(f"{bug_id} | best patch changed every faulty line but still fails; searching all "
+              f"{len(open_tasks)} line(s) again from the original")
+    elif base != bug["source"]:
         print(f"{bug_id} | building on best patch so far; still searching {len(open_tasks)} line(s)")
     options = []
     for kind, line, problem in open_tasks:
