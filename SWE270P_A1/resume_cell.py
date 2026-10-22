@@ -326,11 +326,20 @@ def _fast_screen(bug_id, source):
     return official, extra
 
 
+def _ensure_baseline(bug_id, bug):
+    """With no patch yet, the original buggy.py is the score to beat (and keeps the file present)."""
+    if current_best(bug_id) is None:
+        BEST[bug_id] = {"technique": "original buggy.py (no improvement yet)", "output": None, "code": None,
+                        "merged": bug["source"], "result": run_tests(bug_id, bug["source"])}
+        save_final_patch(f"{bug_id}.py", f"```python\n{bug['source']}```")
+
+
 def wide_search_repair(bug_id):
     if is_solved(current_best(bug_id)):
         print(f"{bug_id} | already solved ({current_best(bug_id)['technique']}), skipping")
         return
     bug = load_bug(bug_id)
+    _ensure_baseline(bug_id, bug)
     tasks = LINE_TASKS[bug_id]
     options = []
     for kind, line, problem in tasks:
@@ -350,7 +359,8 @@ def wide_search_repair(bug_id):
         ranked.pop("", None)
         top = [c for c, _ in ranked.most_common(CANDIDATES_PER_LINE)]
         print(f"{bug_id} | {kind} `{line}` -> {len(top)} candidates, e.g. {top[:4]}")
-        options.append([(kind, line, c) for c in top] or [("replace", line, line)])
+        # last option: leave this line unchanged, so partial fixes of multi-line bugs are kept
+        options.append([(kind, line, c) for c in top] + [("replace", line, line.strip())])
 
     run_tests(bug_id, bug["source"])   # sets up work/<bug> with test_bug.py and test_extra.py
     combos = sorted(itertools.product(*[list(enumerate(o)) for o in options]),
