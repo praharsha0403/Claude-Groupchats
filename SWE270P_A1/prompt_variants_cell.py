@@ -69,6 +69,10 @@ def fs_qa(bug):
             f"A:\n")
 
 VARIANTS = [
+    # the notebook's base template for each technique (lost from the log in the Colab reset)
+    ("zero-shot", build_zero_shot), ("one-shot", build_one_shot),
+    ("chain-of-thought", build_cot), ("few-shot", build_few_shot),
+    # two extra templates per technique
     ("zero-shot", zs_reviewer), ("zero-shot", zs_spec_first),
     ("one-shot", os_off_by_one), ("one-shot", os_diff_style),
     ("chain-of-thought", cot_trace_test), ("chain-of-thought", cot_questions),
